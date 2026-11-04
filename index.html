@@ -45,6 +45,11 @@ a { color: inherit; }
 .script { font-family: var(--font-hand); font-style: italic; color: var(--marigold); margin: 0; font-size: 1.15rem; letter-spacing: .01em; }
 .display { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.12; text-wrap: balance; }
 
+/* Recording mode: stable canvas, no entrance overlay or music button. */
+html.showcase-mode #gate { display:none !important; }
+html.showcase-mode #music-toggle { display:none !important; }
+html.showcase-mode, html.showcase-mode body { overflow-x:hidden; }
+html.showcase-mode .rv { transition-duration:.5s; }
 /* Small, unobtrusive music control on the invitation page */
 #music-toggle { position:fixed; right:max(12px,env(safe-area-inset-right,0px)); bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:30; border:1px solid rgba(247,181,56,.5); border-radius:999px; padding:8px 13px; color:var(--marigold); background:rgba(29,19,17,.9); box-shadow:0 4px 18px rgba(0,0,0,.22); font:500 .75rem var(--font-body); cursor:pointer; backdrop-filter:blur(8px); }
 #music-toggle[aria-pressed="false"] { animation: music-pulse 2.2s ease-in-out infinite; }
@@ -398,6 +403,13 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   var root = document.documentElement;
   root.classList.add('js', 'locked');
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Recording-only mode for automated website showcase tools.
+  // Bypasses the interactive gate so a short capture never gets stuck on it.
+  var showcase = new URLSearchParams(window.location.search).get('showcase') === '1';
+  if (showcase) {
+    root.classList.remove('locked');
+    root.classList.add('showcase-mode');
+  }
 
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -776,8 +788,15 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
       ambient = true; revealCheck(); update();
     }, reduce ? 50 : 2150);
   }
-  // Reveal the invitation automatically after a three-second welcome.
-  setTimeout(openDoors, 3000);
+  // Recording tools capture immediately; bypass the gate for showcase URLs.
+  if (showcase) {
+    opened = true;
+    gate.classList.add('enter', 'done');
+    ambient = true;
+    setTimeout(function () { revealCheck(); update(); }, 80);
+  } else {
+    setTimeout(openDoors, 3000);
+  }
   stage.addEventListener('click', openDoors);
   // A guest tap can unlock audio even if the doors have already started opening.
   stage.addEventListener('click', function () { var audio = document.getElementById('welcome-audio'); if (audio && audio.paused) { var p = audio.play(); if (p && p.catch) p.catch(function () {}); } });
