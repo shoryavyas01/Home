@@ -807,7 +807,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     var journeyStart = journey.getBoundingClientRect().top + position;
     var travel = Math.max(0, journey.offsetHeight - window.innerHeight);
     // Pause BEFORE the sticky caravan scene leaves the screen, not after it.
-    var homeStop = journeyStart + travel * .73;
+    var homeStop = journeyStart + travel * .94;
     var holding = false, heldFor = 0, holdDone = travel <= 0;
     function frame(now) {
       if (autoScrollCancelled) return;
@@ -820,7 +820,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
         holding = true;
         heldFor += dt;
         position = homeStop;
-        if (heldFor >= 8000) { holdDone = true; holding = false; }
+        if (heldFor >= 1800) { holdDone = true; holding = false; }
       } else {
         position = Math.min(maxY, position + speed * dt / 1000);
         if (!holdDone && position >= homeStop) position = homeStop;
