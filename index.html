@@ -27,6 +27,7 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+html.guided-scrolling { scroll-behavior: auto !important; }
 html.locked, html.locked body { overflow: hidden; height: 100%; }
 body {
   margin: 0;
@@ -50,6 +51,8 @@ html.showcase-mode #gate { display:none !important; }
 html.showcase-mode #music-toggle { display:none !important; }
 html.showcase-mode, html.showcase-mode body { overflow-x:hidden; }
 html.showcase-mode .rv { transition-duration:.5s; }
+/* Larger, easier-to-read caravan captions */
+#journey #cap { font-size:clamp(1.5rem, 5.5vw, 2.15rem); line-height:1.3; max-width:92%; margin-inline:auto; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,.5); }
 /* Gentle invitation to tap the entrance */
 #gate .hint { animation: gate-hint-breathe 2s ease-in-out infinite; transform-origin:center; }
 #gate .stage:not(.open) { animation: gate-tap-nudge 3s ease-in-out infinite; }
@@ -781,16 +784,18 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   /* ---------- gentle, continuous full-invitation guided scroll ---------- */
   var autoScrollCancelled = false;
   var autoScrollStarted = false;
+  function stopGuidedScroll() { autoScrollCancelled = true; root.classList.remove('guided-scrolling'); }
   // Any intentional manual navigation immediately hands control back to the guest.
   ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(function (eventName) {
     window.addEventListener(eventName, function (event) {
       if (event.target && event.target.closest('#doors')) return;
-      autoScrollCancelled = true;
+      stopGuidedScroll();
     }, { passive: true });
   });
   function startAutoScroll() {
     if (autoScrollStarted || autoScrollCancelled) return;
     autoScrollStarted = true;
+    root.classList.add('guided-scrolling');
     var started = performance.now();
     var initial = window.scrollY || 0;
     var total = Math.max(0, document.documentElement.scrollHeight - window.innerHeight - initial);
@@ -800,8 +805,9 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
       if (autoScrollCancelled) return;
       var progress = Math.min(1, (now - started) / duration);
       var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      window.scrollTo(0, initial + (maxY - initial) * progress);
+      window.scrollTo({ top: initial + (maxY - initial) * progress, behavior: 'instant' });
       if (progress < 1) requestAnimationFrame(frame);
+      else root.classList.remove('guided-scrolling');
     }
     requestAnimationFrame(frame);
   }
