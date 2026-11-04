@@ -50,6 +50,12 @@ html.showcase-mode #gate { display:none !important; }
 html.showcase-mode #music-toggle { display:none !important; }
 html.showcase-mode, html.showcase-mode body { overflow-x:hidden; }
 html.showcase-mode .rv { transition-duration:.5s; }
+/* Gentle invitation to tap the entrance */
+#gate .hint { animation: gate-hint-breathe 2s ease-in-out infinite; transform-origin:center; }
+#gate .stage:not(.open) { animation: gate-tap-nudge 3s ease-in-out infinite; }
+@keyframes gate-hint-breathe { 0%,100% { opacity:.65; transform:translateY(0); } 50% { opacity:1; transform:translateY(-5px); } }
+@keyframes gate-tap-nudge { 0%,78%,100% { transform:scale(1); } 86% { transform:scale(1.025); } 93% { transform:scale(1); } }
+@media (prefers-reduced-motion:reduce) { #gate .hint, #gate .stage:not(.open) { animation:none; } }
 /* Small, unobtrusive music control on the invitation page */
 #music-toggle { position:fixed; right:max(12px,env(safe-area-inset-right,0px)); bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:30; border:1px solid rgba(247,181,56,.5); border-radius:999px; padding:8px 13px; color:var(--marigold); background:rgba(29,19,17,.9); box-shadow:0 4px 18px rgba(0,0,0,.22); font:500 .75rem var(--font-body); cursor:pointer; backdrop-filter:blur(8px); }
 #music-toggle[aria-pressed="false"] { animation: music-pulse 2.2s ease-in-out infinite; }
@@ -303,7 +309,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   </button>
   <svg class="pk l" viewBox="-60 -72 120 110" aria-hidden="true"><use href="#peacock" x="-60" y="-72" width="120" height="110"/></svg>
   <svg class="pk r" viewBox="-60 -72 120 110" aria-hidden="true"><use href="#peacock" x="-60" y="-72" width="120" height="110"/></svg>
-  <p class="hint">Tap the doors to enter</p>
+  <p class="hint">☝ Tap the doors to enter</p>
 </section>
 
 <!-- SITE -->
@@ -772,31 +778,26 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   }
   if (!reduce) requestAnimationFrame(loop);
 
-  /* ---------- cinematic automatic scroll (45 seconds) ---------- */
+  /* ---------- gentle guided scroll after the guest opens the doors ---------- */
   var autoScrollCancelled = false;
   var autoScrollStarted = false;
-  function cancelAutoScroll() { autoScrollCancelled = true; }
   ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(function (eventName) {
     window.addEventListener(eventName, function (event) {
-      if (event.target && (event.target.closest('#music-toggle') || event.target.closest('#doors'))) return;
-      cancelAutoScroll();
+      if (event.target && event.target.closest('#doors')) return;
+      autoScrollCancelled = true;
     }, { passive: true });
   });
   function startAutoScroll() {
     if (autoScrollStarted || autoScrollCancelled) return;
     autoScrollStarted = true;
-    var start = performance.now();
-    var duration = 45000;
-    var from = window.scrollY || 0;
+    var start = performance.now(), from = window.scrollY || 0, duration = 6500;
+    var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    var distance = Math.min(maxY - from, window.innerHeight * 1.1);
     function frame(now) {
       if (autoScrollCancelled) return;
       var p = Math.min(1, (now - start) / duration);
-      var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      // Smooth acceleration and deceleration, preserving all scroll-triggered animations.
-      var eased = p < .12 ? (.12 * Math.pow(p / .12, 2) / 2) : p > .88 ? (1 - .12 * Math.pow((1 - p) / .12, 2) / 2) : p;
-      // Normalize the easing so the scroll always reaches the last section.
-      var normalized = eased / .94;
-      window.scrollTo({ top: from + (maxY - from) * Math.min(1, normalized), behavior: 'instant' });
+      var ease = p * p * (3 - 2 * p);
+      window.scrollTo(0, from + distance * ease);
       if (p < 1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
@@ -815,7 +816,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     setTimeout(function () { gate.classList.add('enter'); }, reduce ? 0 : 1000);
     setTimeout(function () {
       gate.classList.add('done'); root.classList.remove('locked'); window.scrollTo(0, 0);
-      ambient = true; revealCheck(); update(); setTimeout(startAutoScroll, 450);
+      ambient = true; revealCheck(); update(); setTimeout(startAutoScroll, 1200);
     }, reduce ? 50 : 2150);
   }
   // Recording tools capture immediately; bypass the gate for showcase URLs.
@@ -825,7 +826,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     ambient = true;
     setTimeout(function () { revealCheck(); update(); setTimeout(startAutoScroll, 550); }, 80);
   } else {
-    setTimeout(openDoors, 50);
+    // Gates open only when the guest taps them.
   }
   stage.addEventListener('click', openDoors);
   // A guest tap can unlock audio even if the doors have already started opening.
