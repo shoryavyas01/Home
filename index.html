@@ -55,6 +55,12 @@ html.showcase-mode .rv { transition-duration:.5s; }
 .developer-credit { padding:16px 12px 24px; text-align:center; font-size:11px; letter-spacing:.09em; color:rgba(255,239,207,.55); }
 /* Larger, easier-to-read caravan captions */
 #journey #cap { font-size:clamp(1.5rem, 5.5vw, 2.15rem); line-height:1.3; max-width:92%; margin-inline:auto; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,.5); }
+/* Clearly visible invitation to enter, especially for older guests */
+#gate .gate-enter-cta { position:relative; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; margin:12px auto 0; padding:12px 24px; min-height:62px; border:1.5px solid #f7b538; border-radius:999px; background:linear-gradient(135deg,#a32929,#6c1723); color:#fff4d2; box-shadow:0 0 0 5px rgba(247,181,56,.12),0 7px 24px rgba(0,0,0,.32); font-family:var(--font-body); font-size:clamp(16px,4vw,19px); font-weight:700; line-height:1.2; cursor:pointer; animation:gate-cta-pulse 2s ease-in-out infinite; }
+#gate .gate-enter-cta span { font-size:13px; font-weight:500; letter-spacing:.04em; }
+@keyframes gate-cta-pulse { 0%,100% { box-shadow:0 0 0 4px rgba(247,181,56,.12),0 7px 24px rgba(0,0,0,.32); transform:scale(1); } 50% { box-shadow:0 0 0 11px rgba(247,181,56,0),0 7px 24px rgba(0,0,0,.32); transform:scale(1.035); } }
+#gate.enter .gate-enter-cta, #gate.done .gate-enter-cta { opacity:0; pointer-events:none; }
+@media (prefers-reduced-motion:reduce) { #gate .gate-enter-cta { animation:none; } }
 /* Gentle invitation to tap the entrance */
 #gate .hint { animation: gate-hint-breathe 2s ease-in-out infinite; transform-origin:center; }
 #gate .stage:not(.open) { animation: gate-tap-nudge 3s ease-in-out infinite; }
@@ -314,7 +320,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   </button>
   <svg class="pk l" viewBox="-60 -72 120 110" aria-hidden="true"><use href="#peacock" x="-60" y="-72" width="120" height="110"/></svg>
   <svg class="pk r" viewBox="-60 -72 120 110" aria-hidden="true"><use href="#peacock" x="-60" y="-72" width="120" height="110"/></svg>
-  <p class="hint">☝ Tap the doors to enter</p>
+  <button class="gate-enter-cta" id="gate-enter-cta" type="button" aria-label="Tap here to open the doors">☝ &nbsp; दरवाज़ा खोलें <span>Tap here to enter</span></button>
 </section>
 
 <!-- SITE -->
@@ -858,6 +864,8 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     // Gates open only when the guest taps them.
   }
   stage.addEventListener('click', openDoors);
+  var enterCta = document.getElementById('gate-enter-cta');
+  if (enterCta) enterCta.addEventListener('click', openDoors);
   // A guest tap can unlock audio even if the doors have already started opening.
   stage.addEventListener('click', function () { var audio = document.getElementById('welcome-audio'); if (audio && audio.paused) { var p = audio.play(); if (p && p.catch) p.catch(function () {}); } });
   // Allow guests to mute or resume the music after opening the invitation.
