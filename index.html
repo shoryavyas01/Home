@@ -806,14 +806,27 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     var started = performance.now();
     var initial = window.scrollY || 0;
     var total = Math.max(0, document.documentElement.scrollHeight - window.innerHeight - initial);
-    // Readable, steady pace for older guests, with no stop after the first screen.
     var duration = Math.max(55000, total / 45 * 1000);
+    var holdStarted = 0, holdFinished = false, pausedMs = 0;
     function frame(now) {
       if (autoScrollCancelled) return;
-      var progress = Math.min(1, (now - started) / duration);
       var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      window.scrollTo({ top: initial + (maxY - initial) * progress, behavior: 'instant' });
-      if (progress < 1) requestAnimationFrame(frame);
+      var progress = Math.min(1, (now - started - pausedMs) / duration);
+      var desired = initial + (maxY - initial) * progress;
+      var journeyTop = journey.getBoundingClientRect().top + window.scrollY;
+      var travel = Math.max(0, journey.offsetHeight - window.innerHeight);
+      // Keep the complete home scene on screen for five seconds before proceeding.
+      var homeStop = journeyTop + travel * .85;
+      if (!holdFinished && travel > 0 && desired >= homeStop) {
+        if (!holdStarted) holdStarted = now;
+        desired = homeStop;
+        if (now - holdStarted >= 5000) {
+          pausedMs += now - holdStarted;
+          holdFinished = true;
+        }
+      }
+      window.scrollTo({ top: desired, behavior: 'instant' });
+      if (progress < 1 || !holdFinished) requestAnimationFrame(frame);
       else root.classList.remove('guided-scrolling');
     }
     requestAnimationFrame(frame);
