@@ -772,6 +772,36 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   }
   if (!reduce) requestAnimationFrame(loop);
 
+  /* ---------- cinematic automatic scroll (45 seconds) ---------- */
+  var autoScrollCancelled = false;
+  var autoScrollStarted = false;
+  function cancelAutoScroll() { autoScrollCancelled = true; }
+  ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(function (eventName) {
+    window.addEventListener(eventName, function (event) {
+      if (event.target && (event.target.closest('#music-toggle') || event.target.closest('#doors'))) return;
+      cancelAutoScroll();
+    }, { passive: true });
+  });
+  function startAutoScroll() {
+    if (autoScrollStarted || autoScrollCancelled) return;
+    autoScrollStarted = true;
+    var start = performance.now();
+    var duration = 45000;
+    var from = window.scrollY || 0;
+    function frame(now) {
+      if (autoScrollCancelled) return;
+      var p = Math.min(1, (now - start) / duration);
+      var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      // Smooth acceleration and deceleration, preserving all scroll-triggered animations.
+      var eased = p < .12 ? (.12 * Math.pow(p / .12, 2) / 2) : p > .88 ? (1 - .12 * Math.pow((1 - p) / .12, 2) / 2) : p;
+      // Normalize the easing so the scroll always reaches the last section.
+      var normalized = eased / .94;
+      window.scrollTo({ top: from + (maxY - from) * Math.min(1, normalized), behavior: 'instant' });
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
   /* ---------- gate ---------- */
   var gate = $('#gate'), stage = $('#doors'), opened = false;
   function openDoors() {
@@ -785,7 +815,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     setTimeout(function () { gate.classList.add('enter'); }, reduce ? 0 : 1000);
     setTimeout(function () {
       gate.classList.add('done'); root.classList.remove('locked'); window.scrollTo(0, 0);
-      ambient = true; revealCheck(); update();
+      ambient = true; revealCheck(); update(); setTimeout(startAutoScroll, 450);
     }, reduce ? 50 : 2150);
   }
   // Recording tools capture immediately; bypass the gate for showcase URLs.
@@ -793,9 +823,9 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     opened = true;
     gate.classList.add('enter', 'done');
     ambient = true;
-    setTimeout(function () { revealCheck(); update(); }, 80);
+    setTimeout(function () { revealCheck(); update(); setTimeout(startAutoScroll, 550); }, 80);
   } else {
-    setTimeout(openDoors, 3000);
+    setTimeout(openDoors, 50);
   }
   stage.addEventListener('click', openDoors);
   // A guest tap can unlock audio even if the doors have already started opening.
