@@ -45,6 +45,9 @@ a { color: inherit; }
 .script { font-family: var(--font-hand); font-style: italic; color: var(--marigold); margin: 0; font-size: 1.15rem; letter-spacing: .01em; }
 .display { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.12; text-wrap: balance; }
 
+/* Small, unobtrusive music control on the invitation page */
+#music-toggle { position:fixed; right:max(12px,env(safe-area-inset-right,0px)); bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:30; border:1px solid rgba(247,181,56,.5); border-radius:999px; padding:8px 13px; color:var(--marigold); background:rgba(29,19,17,.9); box-shadow:0 4px 18px rgba(0,0,0,.22); font:500 .75rem var(--font-body); cursor:pointer; backdrop-filter:blur(8px); }
+#music-toggle:focus-visible { outline:2px solid var(--marigold); }
 /* ---------- global chrome ---------- */
 #progress {
   position: fixed; left: 0; right: 0; top: 0; height: 4px; z-index: 60;
@@ -268,6 +271,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
 <svg class="defs" aria-hidden="true" focusable="false"><defs id="defs"></defs></svg>
 
 <div id="progress"></div>
+<audio id="welcome-audio" src="./jamna-jugal-kunj-audio.mp3" preload="none" loop aria-label="Invitation background music"></audio>
 <canvas id="petals"></canvas>
 
 <!-- GATE -->
@@ -297,6 +301,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
 
 <!-- SITE -->
 <main class="page" id="site">
+  <button id="music-toggle" type="button" aria-pressed="false">♪ Play music</button>
   <div class="frieze" data-drift></div>
 
   <section class="hero wrap" id="hero">
@@ -758,6 +763,9 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   function openDoors() {
     if (opened) return; opened = true;
     stage.classList.add('open');
+    // Start the guest-supplied music directly from the tap gesture (iOS-safe).
+    var music = document.getElementById('welcome-audio');
+    if (music) { music.volume = 0.65; var playback = music.play(); if (playback && playback.catch) playback.catch(function () {}); }
     var r = stage.getBoundingClientRect();
     if (!reduce) for (var i = 0; i < 110; i++) petal(r.left + r.width / 2, r.top + r.height * .6, true);
     setTimeout(function () { gate.classList.add('enter'); }, reduce ? 0 : 1000);
@@ -767,6 +775,19 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     }, reduce ? 50 : 2150);
   }
   stage.addEventListener('click', openDoors);
+  // Allow guests to mute or resume the music after opening the invitation.
+  var musicToggle = document.getElementById('music-toggle');
+  var welcomeAudio = document.getElementById('welcome-audio');
+  if (musicToggle && welcomeAudio) {
+    musicToggle.addEventListener('click', function () {
+      if (welcomeAudio.paused) { var p = welcomeAudio.play(); if (p && p.catch) p.catch(function () {}); }
+      else welcomeAudio.pause();
+    });
+    ['play', 'pause', 'ended'].forEach(function (ev) { welcomeAudio.addEventListener(ev, function () {
+      musicToggle.textContent = welcomeAudio.paused ? '♪ Play music' : '♫ Mute music';
+      musicToggle.setAttribute('aria-pressed', String(!welcomeAudio.paused));
+    }); });
+  }
 
   /* ---------- reveal on scroll ---------- */
   var io = null;
