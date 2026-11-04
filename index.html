@@ -379,7 +379,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     <h2 class="display rv" style="--d:.15s">पधारज्यो!</h2>
     <svg class="orn rv" viewBox="0 0 200 14" aria-hidden="true" style="--d:.17s"><use href="#orn"/></svg>
     <p class="lead rv" style="--d:.2s">Your blessings will make our new home complete.</p>
-    <a class="btn big rv" id="wa" style="--d:.25s" href="#" target="_blank" rel="noopener">RSVP on WhatsApp</a>
+    
     <p class="with rv" style="--d:.3s">With love, The Vyas Family</p>
   </section>
   <div class="frieze foot" data-drift></div>
@@ -392,9 +392,6 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   root.classList.add('js', 'locked');
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ===== EDIT ME ===== */
-  var WA_NUMBER = '';   // e.g. '919812345678' (country code + number, digits only). Empty lets the guest pick the contact.
-  var WA_TEXT = 'Ram Ram Sa! We will be joining you at Jamna Jugal Kunj for the Griha Pravesh on Friday, 6 November 2026.';
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
@@ -602,7 +599,6 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     '&dates=20261106T070000Z/20261106T113000Z' +
     '&details=' + encodeURIComponent('Puja at 12:30 PM. Bhojan (Rajasthani thali) from 2:00 PM onwards. Padharo Mhare Ghar!') +
     '&location=' + encodeURIComponent('Opposite Hanuman Vatika, Pokaran, Rajasthan');
-  $('#wa').href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(WA_TEXT);
   $('#dir').setAttribute('aria-label', 'Open exact home location in Google Maps');
 
   /* ---------- countdown (puja = 6 Nov 2026, 12:30 PM IST = 07:00 UTC) ---------- */
