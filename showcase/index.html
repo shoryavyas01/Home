@@ -405,7 +405,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Recording-only mode for automated website showcase tools.
   // Bypasses the interactive gate so a short capture never gets stuck on it.
-  var showcase = true;
+  var showcase = false;
   if (showcase) {
     root.classList.remove('locked');
     root.classList.add('showcase-mode');
