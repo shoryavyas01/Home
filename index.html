@@ -744,10 +744,14 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   }
   function setJourney() {
     var vh = window.innerHeight, jr = journey.getBoundingClientRect();
-    jTarget = clamp(-jr.top / Math.max(1, jr.height - vh), 0, 1);
-    var ci = jTarget < .34 ? 0 : jTarget < .72 ? 1 : 2;
+    var rawJourney = clamp(-jr.top / Math.max(1, jr.height - vh), 0, 1);
+    // Finish the caravan's walk gradually before the sticky scene releases.
+    // The final portion holds the home view, preventing a sudden rush at exit.
+    var walk = clamp(rawJourney / .82, 0, 1);
+    jTarget = walk * walk * (3 - 2 * walk);
+    var ci = rawJourney < .30 ? 0 : rawJourney < .61 ? 1 : 2;
     if (ci !== lastCap) { lastCap = ci; cap.style.opacity = 0; setTimeout(function () { cap.textContent = captions[ci]; cap.style.opacity = 1; }, 180); }
-    endnote.style.opacity = jTarget > .93 ? 1 : 0;
+    endnote.style.opacity = rawJourney > .77 ? 1 : 0;
     if (reduce) { jCur = jTarget; jRender(); return; }
     if (!jRun) { jRun = true; requestAnimationFrame(jFrame); }
   }
