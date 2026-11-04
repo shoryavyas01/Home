@@ -803,30 +803,30 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     if (autoScrollStarted || autoScrollCancelled) return;
     autoScrollStarted = true;
     root.classList.add('guided-scrolling');
-    var started = performance.now();
-    var initial = window.scrollY || 0;
-    var total = Math.max(0, document.documentElement.scrollHeight - window.innerHeight - initial);
-    var duration = Math.max(55000, total / 45 * 1000);
-    var holdStarted = 0, holdFinished = false, pausedMs = 0;
+    var previous = 0, position = window.scrollY || 0;
+    var journeyStart = journey.getBoundingClientRect().top + position;
+    var travel = Math.max(0, journey.offsetHeight - window.innerHeight);
+    // Pause BEFORE the sticky caravan scene leaves the screen, not after it.
+    var homeStop = journeyStart + travel * .73;
+    var holding = false, heldFor = 0, holdDone = travel <= 0;
     function frame(now) {
       if (autoScrollCancelled) return;
+      if (!previous) previous = now;
+      var dt = Math.min(64, now - previous);
+      previous = now;
       var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      var progress = Math.min(1, (now - started - pausedMs) / duration);
-      var desired = initial + (maxY - initial) * progress;
-      var journeyTop = journey.getBoundingClientRect().top + window.scrollY;
-      var travel = Math.max(0, journey.offsetHeight - window.innerHeight);
-      // Keep the complete home scene on screen for five seconds before proceeding.
-      var homeStop = journeyTop + travel * .85;
-      if (!holdFinished && travel > 0 && desired >= homeStop) {
-        if (!holdStarted) holdStarted = now;
-        desired = homeStop;
-        if (now - holdStarted >= 5000) {
-          pausedMs += now - holdStarted;
-          holdFinished = true;
-        }
+      var speed = Math.max(30, maxY / 85); // pixels/second; gentle and readable
+      if (!holdDone && position >= homeStop - 1) {
+        holding = true;
+        heldFor += dt;
+        position = homeStop;
+        if (heldFor >= 8000) { holdDone = true; holding = false; }
+      } else {
+        position = Math.min(maxY, position + speed * dt / 1000);
+        if (!holdDone && position >= homeStop) position = homeStop;
       }
-      window.scrollTo({ top: desired, behavior: 'instant' });
-      if (progress < 1 || !holdFinished) requestAnimationFrame(frame);
+      window.scrollTo({ top: position, behavior: 'instant' });
+      if (position < maxY || holding) requestAnimationFrame(frame);
       else root.classList.remove('guided-scrolling');
     }
     requestAnimationFrame(frame);
