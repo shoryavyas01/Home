@@ -778,9 +778,10 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   }
   if (!reduce) requestAnimationFrame(loop);
 
-  /* ---------- gentle guided scroll after the guest opens the doors ---------- */
+  /* ---------- gentle, continuous full-invitation guided scroll ---------- */
   var autoScrollCancelled = false;
   var autoScrollStarted = false;
+  // Any intentional manual navigation immediately hands control back to the guest.
   ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(function (eventName) {
     window.addEventListener(eventName, function (event) {
       if (event.target && event.target.closest('#doors')) return;
@@ -790,15 +791,17 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
   function startAutoScroll() {
     if (autoScrollStarted || autoScrollCancelled) return;
     autoScrollStarted = true;
-    var start = performance.now(), from = window.scrollY || 0, duration = 6500;
-    var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    var distance = Math.min(maxY - from, window.innerHeight * 1.1);
+    var started = performance.now();
+    var initial = window.scrollY || 0;
+    var total = Math.max(0, document.documentElement.scrollHeight - window.innerHeight - initial);
+    // Readable, steady pace for older guests, with no stop after the first screen.
+    var duration = Math.max(55000, total / 45 * 1000);
     function frame(now) {
       if (autoScrollCancelled) return;
-      var p = Math.min(1, (now - start) / duration);
-      var ease = p * p * (3 - 2 * p);
-      window.scrollTo(0, from + distance * ease);
-      if (p < 1) requestAnimationFrame(frame);
+      var progress = Math.min(1, (now - started) / duration);
+      var maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      window.scrollTo(0, initial + (maxY - initial) * progress);
+      if (progress < 1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   }
@@ -816,7 +819,7 @@ html.js .rv.zoom:not(.in) { transform: scale(.94) translateY(20px); }
     setTimeout(function () { gate.classList.add('enter'); }, reduce ? 0 : 1000);
     setTimeout(function () {
       gate.classList.add('done'); root.classList.remove('locked'); window.scrollTo(0, 0);
-      ambient = true; revealCheck(); update(); setTimeout(startAutoScroll, 1200);
+      ambient = true; revealCheck(); update(); setTimeout(startAutoScroll, 1600);
     }, reduce ? 50 : 2150);
   }
   // Recording tools capture immediately; bypass the gate for showcase URLs.
